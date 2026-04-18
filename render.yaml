@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: chezchrystelle-server
+    runtime: node
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health

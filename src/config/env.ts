@@ -14,6 +14,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(8000),
   MONGODB_URI: z.string().min(1),
   CLIENT_URL: z.string().url(),
+  CORS_ALLOWED_ORIGINS: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional().default(''),
   GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
   GOOGLE_CALLBACK_URL: z.string().optional().default(''),
@@ -52,6 +53,13 @@ export const env = {
   ...parsed.data,
   googleAuthEnabled,
   emailEnabled,
+  allowedOrigins: Array.from(
+    new Set(
+      [parsed.data.CLIENT_URL, ...(parsed.data.CORS_ALLOWED_ORIGINS ?? '').split(',')]
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+    )
+  ),
   initialAdminEmails: (parsed.data.INITIAL_ADMIN_EMAILS ?? '')
     .split(',')
     .map((email) => email.trim().toLowerCase())
