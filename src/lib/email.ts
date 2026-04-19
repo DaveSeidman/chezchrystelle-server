@@ -115,6 +115,31 @@ export async function sendAdminOrderNotificationEmail(input: {
   });
 }
 
+export async function sendSignupNotificationEmail(input: {
+  user: EmailUser;
+  config: { signupNotificationEmails: string[] };
+}) {
+  if (!resend) {
+    console.warn('Email disabled: skipping signup notification email');
+    return;
+  }
+
+  if (!input.config.signupNotificationEmails.length) {
+    return;
+  }
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to: input.config.signupNotificationEmails,
+    subject: `New Chez Chrystelle signup: ${input.user.displayName}`,
+    html: `
+      <p>A new client signed up and is waiting for review.</p>
+      <p><strong>Name:</strong> ${input.user.displayName}</p>
+      <p><strong>Email:</strong> ${input.user.email}</p>
+    `
+  });
+}
+
 export async function sendOrderStatusEmail(input: {
   order: EmailOrder & { status: string };
   user: EmailUser;

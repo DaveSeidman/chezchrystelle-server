@@ -15,7 +15,7 @@ export const clientRouter = Router();
 clientRouter.get(
   '/orders/me',
   asyncHandler(async (request, response) => {
-    const orders = await OrderModel.find({ userId: request.authUser?._id })
+    const orders = await OrderModel.find({ userId: request.authUser?._id, deleted: { $ne: true } })
       .sort({ createdAt: -1 })
       .populate('storeId')
       .populate('lineItems.productId')
@@ -62,6 +62,7 @@ clientRouter.post(
       storeId: store._id,
       fulfillmentDate: payload.fulfillmentDate,
       status: 'pending',
+      deleted: false,
       notes: payload.notes,
       lineItems,
       totals

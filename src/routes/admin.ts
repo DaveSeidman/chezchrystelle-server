@@ -24,7 +24,15 @@ adminRouter.patch(
   '/users/:id',
   asyncHandler(async (request, response) => {
     const payload = updateUserSchema.parse(request.body);
-    const user = await UserModel.findByIdAndUpdate(request.params.id, payload, { new: true });
+    const nextPayload = { ...payload } as typeof payload;
+
+    if (nextPayload.status) {
+      nextPayload.isApproved = nextPayload.status === 'approved';
+    } else if (typeof nextPayload.isApproved === 'boolean') {
+      nextPayload.status = nextPayload.isApproved ? 'approved' : 'pending';
+    }
+
+    const user = await UserModel.findByIdAndUpdate(request.params.id, nextPayload, { new: true });
     response.json(user);
   })
 );
@@ -116,7 +124,7 @@ adminRouter.delete(
 adminRouter.get(
   '/orders',
   asyncHandler(async (_request, response) => {
-    const orders = await OrderModel.find({})
+    const orders = await OrderModel.find({ deleted: { $ne: true } })
       .sort({ createdAt: -1 })
       .populate('userId')
       .populate('storeId')
@@ -131,7 +139,11 @@ adminRouter.patch(
   '/orders/:id',
   asyncHandler(async (request, response) => {
     const payload = updateOrderStatusSchema.parse(request.body);
-    const order = await OrderModel.findByIdAndUpdate(request.params.id, { status: payload.status }, { new: true })
+    const order = await OrderModel.findOneAndUpdate(
+      { _id: request.params.id, deleted: { $ne: true } },
+      { status: payload.status },
+      { new: true }
+    )
       .populate('userId')
       .populate('lineItems.productId');
 
@@ -157,6 +169,23 @@ adminRouter.patch(
     }
 
     return response.json(order);
+  })
+);
+
+adminRouter.delete(
+  '/orders/:id',
+  asyncHandler(async (request, response) => {
+    const order = await OrderModel.findOneAndUpdate(
+      { _id: request.params.id, deleted: { $ne: true } },
+      { deleted: true },
+      { new: true }
+    );
+
+    if (!order) {
+      return response.status(404).json({ message: 'Order not found' });
+    }
+
+    return response.status(204).send();
   })
 );
 

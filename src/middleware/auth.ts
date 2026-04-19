@@ -61,8 +61,11 @@ export function requireApprovedUser(request: Request, response: Response, next: 
     return response.status(401).json({ message: 'Authentication required' });
   }
 
-  if (!request.authUser.isApproved && !request.authUser.isAdmin) {
-    return response.status(403).json({ message: 'Account pending approval' });
+  const isApproved = request.authUser.status === 'approved' || request.authUser.isApproved || request.authUser.isAdmin;
+
+  if (!isApproved) {
+    const message = request.authUser.status === 'denied' ? 'Account access has been denied' : 'Account pending approval';
+    return response.status(403).json({ message });
   }
 
   return next();

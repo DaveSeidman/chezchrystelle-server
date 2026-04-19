@@ -3,7 +3,9 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy, type Profile } from 'passport-google-oauth20';
 
 import { env } from '../config/env';
+import { ConfigModel } from '../models/Config';
 import { UserModel } from '../models/User';
+import { sendSignupNotificationEmail } from './email';
 
 export type AuthTokenPayload = {
   sub: string;
@@ -21,6 +23,9 @@ export async function syncGoogleUser(profile: Profile) {
   }
 
   const initialAdmin = isInitialAdmin(email);
+  const existingUser = await UserModel.findOne({ googleId: profile.id });
+  const nextStatus = initialAdmin ? 'approved' : existingUser?.status ?? 'pending';
+  const nextIsApproved = initialAdmin ? true : existingUser?.isApproved ?? false;
 
   const user = await UserModel.findOneAndUpdate(
     { googleId: profile.id },
@@ -28,11 +33,12 @@ export async function syncGoogleUser(profile: Profile) {
       $set: {
         email,
         displayName: profile.displayName || email,
-        photoUrl: profile.photos?.[0]?.value ?? ''
+        photoUrl: profile.photos?.[0]?.value ?? '',
+        status: nextStatus,
+        isApproved: nextIsApproved
       },
       $setOnInsert: {
         isAdmin: initialAdmin,
-        isApproved: initialAdmin,
         markupAmount: 0
       }
     },
@@ -45,7 +51,23 @@ export async function syncGoogleUser(profile: Profile) {
   if (!user.isAdmin && initialAdmin) {
     user.isAdmin = true;
     user.isApproved = true;
+    user.status = 'approved';
     await user.save();
+  }
+
+  if (!existingUser && !initialAdmin) {
+    const config = await ConfigModel.findOne({ singletonKey: 'general' }).lean();
+
+    if (config) {
+      try {
+        await sendSignupNotificationEmail({
+          user,
+          config
+        });
+      } catch (error) {
+        console.error('Signup notification email failed', error);
+      }
+    }
   }
 
   return user;

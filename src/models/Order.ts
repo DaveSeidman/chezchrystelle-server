@@ -70,6 +70,11 @@ const orderSchema = new Schema(
       type: String,
       default: ''
     },
+    deleted: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
     totals: {
       subtotal: {
         type: Number,

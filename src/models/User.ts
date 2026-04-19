@@ -1,5 +1,7 @@
 import { Schema, model, type InferSchemaType } from 'mongoose';
 
+export const userStatuses = ['pending', 'approved', 'denied'] as const;
+
 const userSchema = new Schema(
   {
     googleId: {
@@ -30,6 +32,12 @@ const userSchema = new Schema(
     isApproved: {
       type: Boolean,
       default: false
+    },
+    status: {
+      type: String,
+      enum: userStatuses,
+      default: 'pending',
+      index: true
     },
     markupAmount: {
       type: Number,

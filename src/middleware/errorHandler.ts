@@ -8,6 +8,11 @@ export function notFoundHandler(_request: Request, response: Response) {
 }
 
 export function errorHandler(error: unknown, _request: Request, response: Response, _next: NextFunction) {
+  if (response.headersSent) {
+    console.error('Unhandled error after headers were sent', error);
+    return;
+  }
+
   if (error instanceof ZodError) {
     return response.status(400).json({
       message: 'Validation failed',

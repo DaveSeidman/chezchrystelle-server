@@ -10,7 +10,7 @@ const seededProducts = [
     baseName: 'Plain Salad',
     size: 'small',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'onions', 'vinaigrette'],
-    price: 12,
+    price: 6,
     sortOrder: 1
   },
   {
@@ -19,7 +19,7 @@ const seededProducts = [
     baseName: 'Plain Salad',
     size: 'large',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'onions', 'vinaigrette'],
-    price: 18,
+    price: 9,
     sortOrder: 2
   },
   {
@@ -28,7 +28,7 @@ const seededProducts = [
     baseName: 'Vegan Salad',
     size: 'small',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'avocado', 'roasted vegetables'],
-    price: 14,
+    price: 6,
     sortOrder: 3
   },
   {
@@ -37,7 +37,7 @@ const seededProducts = [
     baseName: 'Vegan Salad',
     size: 'large',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'avocado', 'roasted vegetables'],
-    price: 20,
+    price: 9,
     sortOrder: 4
   },
   {
@@ -46,7 +46,7 @@ const seededProducts = [
     baseName: 'Salad with Grilled Chicken',
     size: 'small',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'grilled chicken', 'vinaigrette'],
-    price: 16,
+    price: 8,
     sortOrder: 5
   },
   {
@@ -55,7 +55,7 @@ const seededProducts = [
     baseName: 'Salad with Grilled Chicken',
     size: 'large',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'grilled chicken', 'vinaigrette'],
-    price: 22,
+    price: 11,
     sortOrder: 6
   },
   {
@@ -64,7 +64,7 @@ const seededProducts = [
     baseName: 'Salad with Grilled Salmon',
     size: 'small',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'grilled salmon', 'vinaigrette'],
-    price: 18,
+    price: 8,
     sortOrder: 7
   },
   {
@@ -73,7 +73,7 @@ const seededProducts = [
     baseName: 'Salad with Grilled Salmon',
     size: 'large',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'grilled salmon', 'vinaigrette'],
-    price: 24,
+    price: 11,
     sortOrder: 8
   }
 ] as const;
@@ -117,8 +117,9 @@ async function seed() {
       deliveryDays: [1, 2, 3, 4, 5, 6],
       lastOrderTime: '20:00',
       orderThanksMessage: 'Thank you for your order! We will follow up by email with any final pickup details.',
-      contactEmail: 'chrystelleseidman@gmail.com',
-      orderNotificationEmails: []
+      contactEmail: 'hello@chezchrystelle.com',
+      orderNotificationEmails: ['hello@chezchrystelle.com'],
+      signupNotificationEmails: ['hello@chezchrystelle.com']
     },
     {
       upsert: true,

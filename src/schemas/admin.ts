@@ -1,11 +1,13 @@
 import { z } from 'zod';
 
 import { orderStatuses } from '../models/Order';
+import { userStatuses } from '../models/User';
 import { objectIdSchema } from './common';
 
 export const updateUserSchema = z.object({
   isAdmin: z.boolean().optional(),
   isApproved: z.boolean().optional(),
+  status: z.enum(userStatuses).optional(),
   markupAmount: z.coerce.number().min(0).optional()
 });
 
@@ -41,5 +43,6 @@ export const configSchema = z.object({
   lastOrderTime: z.string().regex(/^\d{2}:\d{2}$/),
   orderThanksMessage: z.string().trim().min(1),
   contactEmail: z.email(),
-  orderNotificationEmails: z.array(z.email())
+  orderNotificationEmails: z.array(z.email()),
+  signupNotificationEmails: z.array(z.email())
 });

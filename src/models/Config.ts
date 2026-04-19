@@ -22,11 +22,15 @@ const configSchema = new Schema(
     },
     contactEmail: {
       type: String,
-      default: 'chrystelleseidman@gmail.com'
+      default: 'hello@chezchrystelle.com'
     },
     orderNotificationEmails: {
       type: [String],
-      default: []
+      default: ['hello@chezchrystelle.com']
+    },
+    signupNotificationEmails: {
+      type: [String],
+      default: ['hello@chezchrystelle.com']
     }
   },
   {
