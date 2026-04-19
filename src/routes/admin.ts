@@ -1,7 +1,9 @@
 import { Router } from 'express';
+import { z } from 'zod';
 
 import { asyncHandler } from '../lib/asyncHandler';
 import { sendOrderStatusEmail } from '../lib/email';
+import { enrichUserWithAssignedStores, enrichUsersWithAssignedStores, replaceUserStoreMemberships } from '../lib/storeMemberships';
 import { createSlug } from '../lib/createSlug';
 import { ConfigModel } from '../models/Config';
 import { OrderModel } from '../models/Order';
@@ -12,19 +14,28 @@ import { configSchema, productSchema, storeSchema, updateOrderStatusSchema, upda
 
 export const adminRouter = Router();
 
+const paginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).optional().default(20)
+});
+
 adminRouter.get(
   '/users',
   asyncHandler(async (_request, response) => {
     const users = await UserModel.find({}).sort({ createdAt: -1 }).lean();
-    response.json(users);
+    response.json(await enrichUsersWithAssignedStores(users));
   })
 );
 
 adminRouter.patch(
   '/users/:id',
   asyncHandler(async (request, response) => {
+    const userId = String(request.params.id);
     const payload = updateUserSchema.parse(request.body);
     const nextPayload = { ...payload } as typeof payload;
+    const assignedStoreIds = nextPayload.assignedStoreIds;
+
+    delete nextPayload.assignedStoreIds;
 
     if (nextPayload.status) {
       nextPayload.isApproved = nextPayload.status === 'approved';
@@ -32,8 +43,17 @@ adminRouter.patch(
       nextPayload.status = nextPayload.isApproved ? 'approved' : 'pending';
     }
 
-    const user = await UserModel.findByIdAndUpdate(request.params.id, nextPayload, { new: true });
-    response.json(user);
+    const user = await UserModel.findByIdAndUpdate(userId, nextPayload, { new: true });
+
+    if (!user) {
+      return response.status(404).json({ message: 'User not found' });
+    }
+
+    if (Array.isArray(assignedStoreIds)) {
+      await replaceUserStoreMemberships(userId, assignedStoreIds);
+    }
+
+    response.json(await enrichUserWithAssignedStores(user));
   })
 );
 
@@ -123,15 +143,28 @@ adminRouter.delete(
 
 adminRouter.get(
   '/orders',
-  asyncHandler(async (_request, response) => {
-    const orders = await OrderModel.find({ deleted: { $ne: true } })
+  asyncHandler(async (request, response) => {
+    const { page, pageSize } = paginationQuerySchema.parse(request.query);
+    const query = { deleted: { $ne: true } };
+    const totalItems = await OrderModel.countDocuments(query);
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const orders = await OrderModel.find(query)
       .sort({ createdAt: -1 })
+      .skip((currentPage - 1) * pageSize)
+      .limit(pageSize)
       .populate('userId')
       .populate('storeId')
       .populate('lineItems.productId')
       .lean<any[]>();
 
-    response.json(orders);
+    response.json({
+      items: orders,
+      page: currentPage,
+      pageSize,
+      totalItems,
+      totalPages
+    });
   })
 );
 

@@ -38,11 +38,6 @@ const userSchema = new Schema(
       enum: userStatuses,
       default: 'pending',
       index: true
-    },
-    markupAmount: {
-      type: Number,
-      default: 0,
-      min: 0
     }
   },
   {

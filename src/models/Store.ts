@@ -28,6 +28,11 @@ const storeSchema = new Schema(
       type: String,
       default: ''
     },
+    markupAmount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
     availableProductIds: {
       type: [Types.ObjectId],
       ref: 'Product',

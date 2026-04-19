@@ -6,7 +6,7 @@ type OrderInputItem = {
   quantity: number;
 };
 
-type OrderUser = {
+type OrderStore = {
   markupAmount?: number;
 };
 
@@ -81,7 +81,7 @@ export function assertFulfillmentDateAllowed(fulfillmentDate: string, deliveryDa
   }
 }
 
-export function buildOrderTotals(user: OrderUser, products: OrderProduct[], items: OrderInputItem[]) {
+export function buildOrderTotals(store: OrderStore, products: OrderProduct[], items: OrderInputItem[]) {
   let subtotal = 0;
   let markupTotal = 0;
 
@@ -93,7 +93,7 @@ export function buildOrderTotals(user: OrderUser, products: OrderProduct[], item
     }
 
     const basePrice = product.price;
-    const markupAmount = user.markupAmount ?? 0;
+    const markupAmount = store.markupAmount ?? 0;
     const finalUnitPrice = basePrice + markupAmount;
     const lineTotal = finalUnitPrice * item.quantity;
 

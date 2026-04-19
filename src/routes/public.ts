@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { asyncHandler } from '../lib/asyncHandler';
 import { sendContactEmail } from '../lib/email';
+import { enrichUserWithAssignedStores } from '../lib/storeMemberships';
 import { ConfigModel } from '../models/Config';
 import { ProductModel } from '../models/Product';
 import { StoreModel } from '../models/Store';
@@ -12,7 +13,7 @@ export const publicRouter = Router();
 publicRouter.get(
   '/auth/me',
   asyncHandler(async (request, response) => {
-    response.json({ user: request.authUser ?? null });
+    response.json({ user: await enrichUserWithAssignedStores(request.authUser ?? null) });
   })
 );
 

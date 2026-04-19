@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { Types } from 'mongoose';
+import { z } from 'zod';
 
 import { env } from '../config/env';
 import { asyncHandler } from '../lib/asyncHandler';
 import { buildOrderTotals, assertFulfillmentDateAllowed, getGeneralConfig } from '../lib/order';
 import { sendAdminOrderNotificationEmail, sendOrderConfirmationEmail } from '../lib/email';
+import { userHasStoreAccess } from '../lib/storeMemberships';
 import { OrderModel } from '../models/Order';
 import { ProductModel } from '../models/Product';
 import { StoreModel } from '../models/Store';
@@ -12,16 +14,34 @@ import { createOrderSchema } from '../schemas/client';
 
 export const clientRouter = Router();
 
+const paginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).optional().default(20)
+});
+
 clientRouter.get(
   '/orders/me',
   asyncHandler(async (request, response) => {
-    const orders = await OrderModel.find({ userId: request.authUser?._id, deleted: { $ne: true } })
+    const { page, pageSize } = paginationQuerySchema.parse(request.query);
+    const query = { userId: request.authUser?._id, deleted: { $ne: true } };
+    const totalItems = await OrderModel.countDocuments(query);
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const orders = await OrderModel.find(query)
       .sort({ createdAt: -1 })
+      .skip((currentPage - 1) * pageSize)
+      .limit(pageSize)
       .populate('storeId')
       .populate('lineItems.productId')
       .lean<any[]>();
 
-    response.json(orders);
+    response.json({
+      items: orders,
+      page: currentPage,
+      pageSize,
+      totalItems,
+      totalPages
+    });
   })
 );
 
@@ -36,6 +56,11 @@ clientRouter.post(
 
     const payload = createOrderSchema.parse(request.body);
     const config = await getGeneralConfig();
+    const hasStoreAccess = user.isAdmin ? true : await userHasStoreAccess(String(user._id), payload.storeId);
+
+    if (!hasStoreAccess) {
+      return response.status(403).json({ message: 'You do not have access to place orders for that store' });
+    }
 
     assertFulfillmentDateAllowed(payload.fulfillmentDate, config.deliveryDays, config.lastOrderTime, env.BUSINESS_TIME_ZONE);
 
@@ -55,7 +80,7 @@ clientRouter.post(
       return response.status(400).json({ message: 'Selected products are not available for that store' });
     }
 
-    const { lineItems, totals } = buildOrderTotals(user, products as any, payload.lineItems);
+    const { lineItems, totals } = buildOrderTotals(store, products as any, payload.lineItems);
 
     const order = await OrderModel.create({
       userId: user._id,

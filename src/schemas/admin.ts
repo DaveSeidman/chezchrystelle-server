@@ -8,7 +8,7 @@ export const updateUserSchema = z.object({
   isAdmin: z.boolean().optional(),
   isApproved: z.boolean().optional(),
   status: z.enum(userStatuses).optional(),
-  markupAmount: z.coerce.number().min(0).optional()
+  assignedStoreIds: z.array(objectIdSchema).optional()
 });
 
 export const storeSchema = z.object({
@@ -18,6 +18,7 @@ export const storeSchema = z.object({
   isActive: z.boolean().optional().default(true),
   pickupAddress: z.string().optional().default(''),
   pickupNotes: z.string().optional().default(''),
+  markupAmount: z.coerce.number().min(0).optional().default(0),
   availableProductIds: z.array(objectIdSchema).optional().default([]),
   options: z.record(z.string(), z.unknown()).optional().default({})
 });

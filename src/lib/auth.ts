@@ -38,8 +38,7 @@ export async function syncGoogleUser(profile: Profile) {
         isApproved: nextIsApproved
       },
       $setOnInsert: {
-        isAdmin: initialAdmin,
-        markupAmount: 0
+        isAdmin: initialAdmin
       }
     },
     {

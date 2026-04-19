@@ -99,6 +99,7 @@ async function seed() {
       isActive: true,
       pickupAddress: 'Brooklyn, NY',
       pickupNotes: 'Exact pickup details are shared after confirmation.',
+      markupAmount: 0,
       availableProductIds: products.map((product) => product._id),
       options: {
         allowPickup: true
