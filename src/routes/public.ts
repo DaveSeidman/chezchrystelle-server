@@ -1,5 +1,6 @@
 import { Router } from 'express';
 
+import { env } from '../config/env';
 import { asyncHandler } from '../lib/asyncHandler';
 import { sendContactEmail } from '../lib/email';
 import { enrichUserWithAssignedStores } from '../lib/storeMemberships';
@@ -21,7 +22,14 @@ publicRouter.get(
   '/config/public',
   asyncHandler(async (_request, response) => {
     const config = await ConfigModel.findOne({ singletonKey: 'general' }).lean();
-    response.json(config);
+    response.json(
+      config
+        ? {
+            ...config,
+            businessTimeZone: env.BUSINESS_TIME_ZONE
+          }
+        : null
+    );
   })
 );
 

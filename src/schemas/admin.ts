@@ -4,6 +4,17 @@ import { orderStatuses } from '../models/Order';
 import { userStatuses } from '../models/User';
 import { objectIdSchema } from './common';
 
+const productImageSchema = z.union([
+  z.url(),
+  z
+    .string()
+    .regex(
+      /^(\/)?\S+$/,
+      'Use a full URL or a relative public path like products/plain-salad-small.png'
+    ),
+  z.literal('')
+]);
+
 export const updateUserSchema = z.object({
   isAdmin: z.boolean().optional(),
   isApproved: z.boolean().optional(),
@@ -35,7 +46,7 @@ export const productSchema = z.object({
   baseName: z.string().trim().min(1),
   size: z.enum(['small', 'large']),
   ingredients: z.array(z.string().trim().min(1)).optional().default([]),
-  images: z.array(z.url()).optional().default([]),
+  image: productImageSchema.optional().default(''),
   price: z.coerce.number().min(0),
   isActive: z.boolean().optional().default(true),
   sortOrder: z.coerce.number().int().min(0).optional().default(0)

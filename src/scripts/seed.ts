@@ -10,7 +10,7 @@ const seededProducts = [
     baseName: 'Plain Salad',
     size: 'small',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'onions', 'vinaigrette'],
-    images: [],
+    image: '',
     price: 6,
     sortOrder: 1
   },
@@ -20,7 +20,7 @@ const seededProducts = [
     baseName: 'Plain Salad',
     size: 'large',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'onions', 'vinaigrette'],
-    images: [],
+    image: '',
     price: 9,
     sortOrder: 2
   },
@@ -30,7 +30,7 @@ const seededProducts = [
     baseName: 'Vegan Salad',
     size: 'small',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'avocado', 'roasted vegetables'],
-    images: [],
+    image: '',
     price: 6,
     sortOrder: 3
   },
@@ -40,7 +40,7 @@ const seededProducts = [
     baseName: 'Vegan Salad',
     size: 'large',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'avocado', 'roasted vegetables'],
-    images: [],
+    image: '',
     price: 9,
     sortOrder: 4
   },
@@ -50,7 +50,7 @@ const seededProducts = [
     baseName: 'Salad with Grilled Chicken',
     size: 'small',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'grilled chicken', 'vinaigrette'],
-    images: [],
+    image: '',
     price: 8,
     sortOrder: 5
   },
@@ -60,7 +60,7 @@ const seededProducts = [
     baseName: 'Salad with Grilled Chicken',
     size: 'large',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'grilled chicken', 'vinaigrette'],
-    images: [],
+    image: '',
     price: 11,
     sortOrder: 6
   },
@@ -70,7 +70,7 @@ const seededProducts = [
     baseName: 'Salad with Grilled Salmon',
     size: 'small',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'grilled salmon', 'vinaigrette'],
-    images: [],
+    image: '',
     price: 8,
     sortOrder: 7
   },
@@ -80,7 +80,7 @@ const seededProducts = [
     baseName: 'Salad with Grilled Salmon',
     size: 'large',
     ingredients: ['greens', 'tomatoes', 'cucumbers', 'grilled salmon', 'vinaigrette'],
-    images: [],
+    image: '',
     price: 11,
     sortOrder: 8
   }

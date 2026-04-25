@@ -2,24 +2,24 @@ import { ProductModel } from '../models/Product';
 import type { MigrationDefinition } from './types';
 
 export async function runBackfillProductImagesMigration() {
-  const result = await ProductModel.updateMany(
+  const result = await ProductModel.collection.updateMany(
     {
-      images: {
+      image: {
         $exists: false
       }
     },
     {
       $set: {
-        images: []
+        image: ''
       }
     }
   );
 
-  console.log(`[migration] Backfilled images=[] on ${result.modifiedCount} products`);
+  console.log(`[migration] Backfilled image='' on ${result.modifiedCount} products`);
 }
 
 export const backfillProductImagesMigration: MigrationDefinition = {
   key: '20260420_backfill_product_images',
-  description: 'Set images=[] on legacy products missing the field',
+  description: "Set image='' on legacy products missing the field",
   run: runBackfillProductImagesMigration
 };
