@@ -8,7 +8,34 @@ Express + MongoDB API for the Chez Chrystelle website.
 2. Fill in MongoDB, JWT, and any auth/email values you want to use locally.
 3. Install dependencies with `npm install`.
 4. Run `npm run seed` to create starter config, products, and the default store.
-5. Start the server with `npm run dev`.
+5. Run `npm run migrate` to apply any pending tracked migrations.
+6. Start the server with `npm run dev`.
+
+## Sync local and remote databases
+
+- Set `LOCAL_MONGODB_URI` to your local Mongo database URI.
+- Set `REMOTE_MONGODB_URI` to your hosted Mongo database URI.
+- Set `SYNC_PUSH_PASSWORD` to a password you will type before any `push`.
+- Pull remote data down into local:
+  - `npm run sync:pull`
+- Push local data up into remote:
+  - `npm run sync:push`
+- Include `users` only when you explicitly want them:
+  - `npm run sync:pull -- --include-users`
+  - `npm run sync:push -- --include-users`
+
+By default these sync scripts fully replace the target collections for:
+- `configs`
+- `orders`
+- `products`
+- `stores`
+- `storememberships`
+
+`users` is intentionally excluded unless you pass `--include-users` or set `SYNC_INCLUDE_USERS=true`.
+
+Each sync is interactive:
+- `pull` shows you the local collections that will be deleted and asks for `Y/N`.
+- `push` first requires `SYNC_PUSH_PASSWORD`, then shows you the remote collections that will be deleted and asks for `Y/N`.
 
 ## Local testing
 
@@ -22,8 +49,16 @@ Express + MongoDB API for the Chez Chrystelle website.
 
 - Render must install dev dependencies during the build because TypeScript and the type packages are used at build time.
 - Use this build command: `npm ci --include=dev && npm run build`
+- Use this pre-deploy command: `npm run migrate`
 - Use this start command: `npm start`
 - A sample [render.yaml](/Users/daveseidman/Documents/personal/chezchrystelle/website/chezchrystelle-server/render.yaml) is included for reference.
+
+## Migrations
+
+- Migrations live in `src/migrations/`.
+- `npm run migrate` records completed migrations in the `migrationruns` collection and only applies new ones.
+- The migration runner is designed for Render's `Pre-deploy command`, so deploys can stay in sync with schema changes.
+- Keep migrations forward-only and idempotent where possible.
 
 ## Important env vars
 

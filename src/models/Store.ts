@@ -28,6 +28,16 @@ const storeSchema = new Schema(
       type: String,
       default: ''
     },
+    mapLocation: {
+      lat: {
+        type: Number,
+        required: false
+      },
+      lng: {
+        type: Number,
+        required: false
+      }
+    },
     markupAmount: {
       type: Number,
       default: 0,

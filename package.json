@@ -6,10 +6,15 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "check": "tsc --noEmit",
+    "migrate": "tsx src/scripts/migrate.ts",
     "start": "node dist/index.js",
     "seed": "tsx src/scripts/seed.ts",
+    "cleanup:brooklyn-store": "tsx src/scripts/removeBrooklynPlaceholderStore.ts",
+    "backfill:product-images": "tsx src/scripts/backfillProductImages.ts",
     "backfill:order-deleted": "tsx src/scripts/backfillOrderDeleted.ts",
-    "backfill:store-markup": "tsx src/scripts/backfillStoreMarkup.ts"
+    "backfill:store-markup": "tsx src/scripts/backfillStoreMarkup.ts",
+    "sync:pull": "tsx src/scripts/syncDatabases.ts pull",
+    "sync:push": "tsx src/scripts/syncDatabases.ts push"
   },
   "dependencies": {
     "cors": "^2.8.5",

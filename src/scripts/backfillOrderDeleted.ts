@@ -1,19 +1,9 @@
 import { connectToDatabase } from '../config/database';
-import { OrderModel } from '../models/Order';
+import { runBackfillOrderDeletedMigration } from '../migrations/20260418_backfillOrderDeleted';
 
 async function backfillOrderDeleted() {
   await connectToDatabase();
-
-  const result = await OrderModel.updateMany(
-    { deleted: { $exists: false } },
-    {
-      $set: {
-        deleted: false
-      }
-    }
-  );
-
-  console.log(`Backfilled deleted=false on ${result.modifiedCount} orders`);
+  await runBackfillOrderDeletedMigration();
   process.exit(0);
 }
 

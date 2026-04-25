@@ -10,6 +10,10 @@ type StoreLike = {
   isActive: boolean;
   pickupAddress: string;
   pickupNotes: string;
+  mapLocation?: {
+    lat?: number;
+    lng?: number;
+  };
   availableProductIds: unknown[];
   options: Record<string, unknown>;
 };
@@ -28,6 +32,13 @@ function serializeStore(store: StoreLike) {
     isActive: store.isActive,
     pickupAddress: store.pickupAddress,
     pickupNotes: store.pickupNotes,
+    mapLocation:
+      typeof store.mapLocation?.lat === 'number' && typeof store.mapLocation?.lng === 'number'
+        ? {
+            lat: store.mapLocation.lat,
+            lng: store.mapLocation.lng
+          }
+        : undefined,
     availableProductIds: (store.availableProductIds ?? []).map((value) => String(value)),
     options: store.options ?? {}
   };

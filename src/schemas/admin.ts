@@ -18,6 +18,12 @@ export const storeSchema = z.object({
   isActive: z.boolean().optional().default(true),
   pickupAddress: z.string().optional().default(''),
   pickupNotes: z.string().optional().default(''),
+  mapLocation: z
+    .object({
+      lat: z.coerce.number(),
+      lng: z.coerce.number()
+    })
+    .optional(),
   markupAmount: z.coerce.number().min(0).optional().default(0),
   availableProductIds: z.array(objectIdSchema).optional().default([]),
   options: z.record(z.string(), z.unknown()).optional().default({})
@@ -29,6 +35,7 @@ export const productSchema = z.object({
   baseName: z.string().trim().min(1),
   size: z.enum(['small', 'large']),
   ingredients: z.array(z.string().trim().min(1)).optional().default([]),
+  images: z.array(z.url()).optional().default([]),
   price: z.coerce.number().min(0),
   isActive: z.boolean().optional().default(true),
   sortOrder: z.coerce.number().int().min(0).optional().default(0)

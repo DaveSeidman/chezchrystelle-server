@@ -1,19 +1,9 @@
 import { connectToDatabase } from '../config/database';
-import { StoreModel } from '../models/Store';
+import { runBackfillStoreMarkupMigration } from '../migrations/20260419_backfillStoreMarkup';
 
 async function backfillStoreMarkup() {
   await connectToDatabase();
-
-  const result = await StoreModel.updateMany(
-    { markupAmount: { $exists: false } },
-    {
-      $set: {
-        markupAmount: 0
-      }
-    }
-  );
-
-  console.log(`Backfilled markupAmount=0 on ${result.modifiedCount} stores`);
+  await runBackfillStoreMarkupMigration();
   process.exit(0);
 }
 
