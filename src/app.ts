@@ -3,7 +3,7 @@ import express from 'express';
 import passport from 'passport';
 
 import { env } from './config/env';
-import { optionalAuth, requireAdmin, requireApprovedUser, requireAuth } from './middleware/auth';
+import { optionalAuth, requireAdmin, requireAuth } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { adminRouter } from './routes/admin';
 import { authRouter } from './routes/auth';
@@ -40,7 +40,7 @@ export function createApp() {
 
   app.use('/auth', authRouter);
   app.use('/api', optionalAuth, publicRouter);
-  app.use('/api', requireAuth, requireApprovedUser, clientRouter);
+  app.use('/api', requireAuth, clientRouter);
   app.use('/api/admin', requireAuth, requireAdmin, adminRouter);
 
   app.use(notFoundHandler);

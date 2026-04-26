@@ -8,6 +8,7 @@ import { logAuditEvent } from '../lib/auditLog';
 import { buildOrderTotals, assertFulfillmentDateAllowed, getGeneralConfig } from '../lib/order';
 import { sendAdminOrderNotificationEmail, sendOrderConfirmationEmail } from '../lib/email';
 import { userHasStoreAccess } from '../lib/storeMemberships';
+import { requireApprovedUser } from '../middleware/auth';
 import { OrderModel } from '../models/Order';
 import { ProductModel } from '../models/Product';
 import { StoreModel } from '../models/Store';
@@ -48,6 +49,7 @@ clientRouter.get(
 
 clientRouter.post(
   '/orders',
+  requireApprovedUser,
   asyncHandler(async (request, response) => {
     const user = request.authUser;
 
