@@ -5,6 +5,7 @@ import { Strategy as GoogleStrategy, type Profile } from 'passport-google-oauth2
 import { env } from '../config/env';
 import { ConfigModel } from '../models/Config';
 import { UserModel } from '../models/User';
+import { logAuditEvent } from './auditLog';
 import { sendSignupNotificationEmail } from './email';
 
 export type AuthTokenPayload = {
@@ -55,6 +56,15 @@ export async function syncGoogleUser(profile: Profile) {
   }
 
   if (!existingUser && !initialAdmin) {
+    logAuditEvent('user_signed_up', {
+      userId: String(user._id),
+      googleId: user.googleId,
+      email: user.email,
+      displayName: user.displayName,
+      status: user.status,
+      isAdmin: user.isAdmin
+    });
+
     const config = await ConfigModel.findOne({ singletonKey: 'general' }).lean();
 
     if (config) {
@@ -67,6 +77,18 @@ export async function syncGoogleUser(profile: Profile) {
         console.error('Signup notification email failed', error);
       }
     }
+  }
+
+  if (existingUser && existingUser.status !== user.status) {
+    logAuditEvent('user_status_auto_updated', {
+      userId: String(user._id),
+      googleId: user.googleId,
+      email: user.email,
+      displayName: user.displayName,
+      previousStatus: existingUser.status,
+      nextStatus: user.status,
+      isAdmin: user.isAdmin
+    });
   }
 
   return user;

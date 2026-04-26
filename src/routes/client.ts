@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { env } from '../config/env';
 import { asyncHandler } from '../lib/asyncHandler';
+import { logAuditEvent } from '../lib/auditLog';
 import { buildOrderTotals, assertFulfillmentDateAllowed, getGeneralConfig } from '../lib/order';
 import { sendAdminOrderNotificationEmail, sendOrderConfirmationEmail } from '../lib/email';
 import { userHasStoreAccess } from '../lib/storeMemberships';
@@ -91,6 +92,21 @@ clientRouter.post(
       notes: payload.notes,
       lineItems,
       totals
+    });
+
+    logAuditEvent('order_placed', {
+      orderId: String(order._id),
+      userId: String(user._id),
+      userEmail: user.email,
+      userDisplayName: user.displayName,
+      storeId: String(store._id),
+      storeName: store.name,
+      fulfillmentDate: order.fulfillmentDate,
+      lineItemCount: order.lineItems.length,
+      subtotal: totals.subtotal,
+      markupTotal: totals.markupTotal,
+      total: totals.total,
+      status: order.status
     });
 
     const productNames = Object.fromEntries(products.map((product) => [String(product._id), product.name]));

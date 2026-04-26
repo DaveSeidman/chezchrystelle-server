@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
 
+import { getActorSummary } from '../lib/adminAudit';
 import { asyncHandler } from '../lib/asyncHandler';
+import { logAuditEvent } from '../lib/auditLog';
 import { sendOrderStatusEmail } from '../lib/email';
 import { enrichUserWithAssignedStores, enrichUsersWithAssignedStores, replaceUserStoreMemberships } from '../lib/storeMemberships';
 import { createSlug } from '../lib/createSlug';
@@ -31,6 +33,7 @@ adminRouter.patch(
   '/users/:id',
   asyncHandler(async (request, response) => {
     const userId = String(request.params.id);
+    const actor = getActorSummary(request.authUser);
     const payload = updateUserSchema.parse(request.body);
     const nextPayload = { ...payload } as typeof payload;
     const assignedStoreIds = nextPayload.assignedStoreIds;
@@ -43,6 +46,7 @@ adminRouter.patch(
       nextPayload.status = nextPayload.isApproved ? 'approved' : 'pending';
     }
 
+    const existingUser = await UserModel.findById(userId).lean();
     const user = await UserModel.findByIdAndUpdate(userId, nextPayload, { new: true });
 
     if (!user) {
@@ -51,6 +55,43 @@ adminRouter.patch(
 
     if (Array.isArray(assignedStoreIds)) {
       await replaceUserStoreMemberships(userId, assignedStoreIds);
+      logAuditEvent('user_store_assignments_updated', {
+        ...actor,
+        userId: String(user._id),
+        userEmail: user.email,
+        userDisplayName: user.displayName,
+        assignedStoreIds
+      });
+    }
+
+    if (existingUser) {
+      const statusChanged = existingUser.status !== user.status;
+      const approvalChanged = Boolean(existingUser.isApproved) !== Boolean(user.isApproved);
+      const adminChanged = Boolean(existingUser.isAdmin) !== Boolean(user.isAdmin);
+
+      if (statusChanged || approvalChanged || adminChanged) {
+        logAuditEvent('user_updated', {
+          ...actor,
+          userId: String(user._id),
+          userEmail: user.email,
+          userDisplayName: user.displayName,
+          previousStatus: existingUser.status,
+          nextStatus: user.status,
+          previousIsApproved: Boolean(existingUser.isApproved),
+          nextIsApproved: Boolean(user.isApproved),
+          previousIsAdmin: Boolean(existingUser.isAdmin),
+          nextIsAdmin: Boolean(user.isAdmin)
+        });
+
+        if (existingUser.status !== 'approved' && user.status === 'approved') {
+          logAuditEvent('user_approved', {
+            ...actor,
+            userId: String(user._id),
+            userEmail: user.email,
+            userDisplayName: user.displayName
+          });
+        }
+      }
     }
 
     response.json(await enrichUserWithAssignedStores(user));
@@ -73,6 +114,13 @@ adminRouter.post(
       ...payload,
       slug: createSlug(payload.slug)
     });
+    logAuditEvent('store_created', {
+      ...getActorSummary(request.authUser),
+      storeId: String(store._id),
+      storeName: store.name,
+      slug: store.slug,
+      isActive: store.isActive
+    });
     response.status(201).json(store);
   })
 );
@@ -87,6 +135,14 @@ adminRouter.patch(
     }
 
     const store = await StoreModel.findByIdAndUpdate(request.params.id, payload, { new: true });
+    if (store) {
+      logAuditEvent('store_updated', {
+        ...getActorSummary(request.authUser),
+        storeId: String(store._id),
+        storeName: store.name,
+        updatedFields: Object.keys(payload)
+      });
+    }
     response.json(store);
   })
 );
@@ -94,7 +150,14 @@ adminRouter.patch(
 adminRouter.delete(
   '/stores/:id',
   asyncHandler(async (request, response) => {
-    await StoreModel.findByIdAndDelete(request.params.id);
+    const store = await StoreModel.findByIdAndDelete(request.params.id);
+    if (store) {
+      logAuditEvent('store_deleted', {
+        ...getActorSummary(request.authUser),
+        storeId: String(store._id),
+        storeName: store.name
+      });
+    }
     response.status(204).send();
   })
 );
@@ -115,6 +178,14 @@ adminRouter.post(
       ...payload,
       slug: createSlug(payload.slug)
     });
+    logAuditEvent('product_created', {
+      ...getActorSummary(request.authUser),
+      productId: String(product._id),
+      productName: product.name,
+      slug: product.slug,
+      price: product.price,
+      isActive: product.isActive
+    });
     response.status(201).json(product);
   })
 );
@@ -129,6 +200,14 @@ adminRouter.patch(
     }
 
     const product = await ProductModel.findByIdAndUpdate(request.params.id, payload, { new: true });
+    if (product) {
+      logAuditEvent('product_updated', {
+        ...getActorSummary(request.authUser),
+        productId: String(product._id),
+        productName: product.name,
+        updatedFields: Object.keys(payload)
+      });
+    }
     response.json(product);
   })
 );
@@ -136,7 +215,14 @@ adminRouter.patch(
 adminRouter.delete(
   '/products/:id',
   asyncHandler(async (request, response) => {
-    await ProductModel.findByIdAndDelete(request.params.id);
+    const product = await ProductModel.findByIdAndDelete(request.params.id);
+    if (product) {
+      logAuditEvent('product_deleted', {
+        ...getActorSummary(request.authUser),
+        productId: String(product._id),
+        productName: product.name
+      });
+    }
     response.status(204).send();
   })
 );
@@ -172,6 +258,8 @@ adminRouter.patch(
   '/orders/:id',
   asyncHandler(async (request, response) => {
     const payload = updateOrderStatusSchema.parse(request.body);
+    const actor = getActorSummary(request.authUser);
+    const previousOrder = await OrderModel.findOne({ _id: request.params.id, deleted: { $ne: true } }).lean();
     const order = await OrderModel.findOneAndUpdate(
       { _id: request.params.id, deleted: { $ne: true } },
       { status: payload.status },
@@ -183,6 +271,14 @@ adminRouter.patch(
     if (!order) {
       return response.status(404).json({ message: 'Order not found' });
     }
+
+    logAuditEvent('order_status_updated', {
+      ...actor,
+      orderId: String(order._id),
+      previousStatus: previousOrder?.status ?? null,
+      nextStatus: order.status,
+      sendEmail: payload.sendEmail
+    });
 
     if (payload.sendEmail) {
       const populatedOrder = order.toObject() as any;
@@ -218,6 +314,15 @@ adminRouter.delete(
       return response.status(404).json({ message: 'Order not found' });
     }
 
+    logAuditEvent('order_deleted', {
+      ...getActorSummary(request.authUser),
+      orderId: String(order._id),
+      userId: String(order.userId),
+      storeId: String(order.storeId),
+      fulfillmentDate: order.fulfillmentDate,
+      total: order.totals?.total ?? 0
+    });
+
     return response.status(204).send();
   })
 );
@@ -245,6 +350,15 @@ adminRouter.put(
         new: true
       }
     );
+
+    logAuditEvent('config_updated', {
+      ...getActorSummary(request.authUser),
+      deliveryDays: config.deliveryDays,
+      lastOrderTime: config.lastOrderTime,
+      orderNotificationEmails: config.orderNotificationEmails,
+      signupNotificationEmails: config.signupNotificationEmails,
+      contactEmail: config.contactEmail
+    });
 
     response.json(config);
   })
