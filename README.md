@@ -1,6 +1,6 @@
 # ChezChrystelle Server
 
-Express + MongoDB API for the Chez Chrystelle website.
+Express + MongoDB API for the Chez Chrystelle website. Version 1
 
 ## Setup
 
