@@ -26,6 +26,18 @@ type EmailUser = {
   displayName: string;
 };
 
+type ForwardReceivedEmailInput =
+  | {
+      emailId: string;
+      to: string | string[];
+      passthrough?: true;
+    }
+  | ({
+      emailId: string;
+      to: string | string[];
+      passthrough: false;
+    } & ({ text: string; html?: string } | { text?: string; html: string }));
+
 function renderOrderLines(order: EmailOrder, productNames: Record<string, string>) {
   const items = order.lineItems
     .map((item) => {
@@ -40,6 +52,53 @@ function renderOrderLines(order: EmailOrder, productNames: Record<string, string
     <p>Total: <strong>$${order.totals.total.toFixed(2)}</strong></p>
     <p>Notes: ${order.notes || 'None'}</p>
   `;
+}
+
+export async function forwardReceivedEmail(input: ForwardReceivedEmailInput) {
+  if (!resend) {
+    console.warn('Email disabled: skipping received email forward');
+    return null;
+  }
+
+  const response =
+    input.passthrough === false
+      ? await forwardReceivedEmailWithIntro(input)
+      : await resend.emails.receiving.forward({
+          emailId: input.emailId,
+          to: input.to,
+          from: env.EMAIL_FROM
+        });
+
+  if (response.error) {
+    throw new Error(`Received email forward failed: ${response.error.message}`);
+  }
+
+  return response.data;
+}
+
+async function forwardReceivedEmailWithIntro(input: Extract<ForwardReceivedEmailInput, { passthrough: false }>) {
+  if (input.html) {
+    return resend!.emails.receiving.forward({
+      emailId: input.emailId,
+      to: input.to,
+      from: env.EMAIL_FROM,
+      passthrough: false,
+      html: input.html,
+      ...(input.text ? { text: input.text } : {})
+    });
+  }
+
+  if (!input.text) {
+    throw new Error('Received email forward failed: text or html is required when passthrough is false');
+  }
+
+  return resend!.emails.receiving.forward({
+    emailId: input.emailId,
+    to: input.to,
+    from: env.EMAIL_FROM,
+    passthrough: false,
+    text: input.text
+  });
 }
 
 export async function sendContactEmail(input: { name: string; email: string; message: string; newsletter: boolean }, config: { contactEmail: string }) {
