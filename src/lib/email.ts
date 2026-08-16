@@ -38,6 +38,29 @@ type ForwardReceivedEmailInput =
       passthrough: false;
     } & ({ text: string; html?: string } | { text?: string; html: string }));
 
+type VerifyReceivedEmailWebhookInput = {
+  payload: string;
+  id: string;
+  timestamp: string;
+  signature: string;
+};
+
+export function verifyReceivedEmailWebhook(input: VerifyReceivedEmailWebhookInput) {
+  if (!resend || !env.RESEND_WEBHOOK_SECRET) {
+    throw new Error('Received email webhook is not configured');
+  }
+
+  return resend.webhooks.verify({
+    payload: input.payload,
+    headers: {
+      id: input.id,
+      timestamp: input.timestamp,
+      signature: input.signature
+    },
+    webhookSecret: env.RESEND_WEBHOOK_SECRET
+  });
+}
+
 function renderOrderLines(order: EmailOrder, productNames: Record<string, string>) {
   const items = order.lineItems
     .map((item) => {
@@ -101,7 +124,10 @@ async function forwardReceivedEmailWithIntro(input: Extract<ForwardReceivedEmail
   });
 }
 
-export async function sendContactEmail(input: { name: string; email: string; message: string; newsletter: boolean }, config: { contactEmail: string }) {
+export async function sendContactEmail(
+  input: { name: string; email?: string; phone?: string; message: string; newsletter: boolean; contactReason?: string },
+  config: { contactEmail: string }
+) {
   if (!resend) {
     console.warn('Email disabled: skipping contact email');
     return;
@@ -110,11 +136,13 @@ export async function sendContactEmail(input: { name: string; email: string; mes
   await resend.emails.send({
     from: env.EMAIL_FROM,
     to: [config.contactEmail],
-    replyTo: input.email,
+    ...(input.email ? { replyTo: input.email } : {}),
     subject: `Chez Chrystelle contact form: ${input.name}`,
     html: `
       <p><strong>Name:</strong> ${input.name}</p>
-      <p><strong>Email:</strong> ${input.email}</p>
+      <p><strong>Email:</strong> ${input.email || 'Not provided'}</p>
+      <p><strong>Phone:</strong> ${input.phone || 'Not provided'}</p>
+      ${input.contactReason ? `<p><strong>Contact reason:</strong> ${input.contactReason}</p>` : ''}
       <p><strong>Newsletter:</strong> ${input.newsletter ? 'Yes' : 'No'}</p>
       <p><strong>Message:</strong></p>
       <p>${input.message}</p>

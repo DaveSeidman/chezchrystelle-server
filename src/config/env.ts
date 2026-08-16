@@ -22,6 +22,9 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('7d'),
   RESEND_API_KEY: z.string().optional().default(''),
   EMAIL_FROM: z.string().optional().default(''),
+  RESEND_WEBHOOK_SECRET: z.string().optional().default(''),
+  INBOUND_FORWARD_TO: z.string().optional().default(''),
+  INBOUND_ADDRESSES: z.string().optional().default('hello@chezchrystelle.com,info@chezchrystelle.com,bonjour@chezchrystelle.com'),
   INITIAL_ADMIN_EMAILS: z.string().optional(),
   BUSINESS_TIME_ZONE: z.string().default('America/New_York'),
   DEV_AUTH_ENABLED: booleanFromEnv,
@@ -62,6 +65,12 @@ export const env = {
   ),
   initialAdminEmails: (parsed.data.INITIAL_ADMIN_EMAILS ?? '')
     .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean),
+  inboundAddresses: parsed.data.INBOUND_ADDRESSES.split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean),
+  inboundForwardTo: parsed.data.INBOUND_FORWARD_TO.split(',')
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean)
 };

@@ -9,6 +9,7 @@ import { adminRouter } from './routes/admin';
 import { authRouter } from './routes/auth';
 import { clientRouter } from './routes/client';
 import { publicRouter } from './routes/public';
+import { webhookRouter } from './routes/webhooks';
 
 export function createApp() {
   const app = express();
@@ -32,6 +33,7 @@ export function createApp() {
     })
   );
   app.use(passport.initialize());
+  app.use('/webhooks/resend', express.text({ type: 'application/json' }), webhookRouter);
   app.use(express.json());
 
   app.get('/health', (_request, response) => {
