@@ -66,7 +66,10 @@ Each sync is interactive:
 - `CORS_ALLOWED_ORIGINS`: optional extra origins allowed by CORS, such as the temporary GitHub Pages domain during rollout.
 - `GOOGLE_CALLBACK_URL`: the backend callback URL registered in Google.
 - `INITIAL_ADMIN_EMAILS`: comma-separated emails that should auto-promote to admin on first login.
-- `RESEND_API_KEY` and `EMAIL_FROM`: required for contact/order emails.
+- `RESEND_API_KEY` and `EMAIL_FROM`: required for contact/order emails. A full-access Resend key is required when inbound forwarding is enabled.
+- `RESEND_WEBHOOK_SECRET`: signing secret for the Resend `email.received` webhook.
+- `INBOUND_FORWARD_TO`: comma-separated mailboxes that receive forwarded messages sent to the configured inbound addresses.
+- `INBOUND_ADDRESSES`: comma-separated public addresses accepted by the inbound webhook.
 - `DEV_AUTH_ENABLED`: optional local-only shortcut login route at `/auth/dev-login`.
 
 ## Routes
@@ -78,6 +81,7 @@ Each sync is interactive:
 - `GET /api/stores/public`
 - `GET /api/products/public`
 - `POST /api/contact`
+- `POST /webhooks/resend`
 - `GET /api/auth/me`
 - `GET /api/orders/me`
 - `POST /api/orders`
